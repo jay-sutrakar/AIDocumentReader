@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="DocumentReaderService" target="25" />
+      <module name="DocumentReaderService.main" target="25" />
+      <module name="DocumentReaderService.test" target="25" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="DocumentReaderService" options="-parameters" />
+      <module name="DocumentReaderService.main" options="-parameters" />
+      <module name="DocumentReaderService.test" options="-parameters" />
+    </option>
+  </component>
+</project>
