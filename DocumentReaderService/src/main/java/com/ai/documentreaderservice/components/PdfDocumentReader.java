@@ -12,6 +12,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class PdfDocumentReader {
@@ -21,10 +22,14 @@ public class PdfDocumentReader {
     public PdfDocumentReader(VectorStore vectorStore) {
         this.vectorStore = vectorStore;
     }
-    public void readAndStoreDocument(Resource resource) {
+    public void readAndStoreDocument(Resource resource, Map<String, Object> additionalMetadata) {
         List<Document> documents = getDocuments(resource);
+        for (Document doc : documents) {
+            Map<String, Object> existingMetadata = doc.getMetadata();
+            existingMetadata.putAll(additionalMetadata);
+        }
         List<Document> splittedDocument = textSplitter(documents);
-        vectorStore.accept( splittedDocument);
+        vectorStore.accept(splittedDocument);
         log.info("Document stored success fully | vectorStoreName={}", vectorStore.getName());
     }
 
@@ -33,13 +38,7 @@ public class PdfDocumentReader {
         return tokenTextSplitter.split(documents);
     }
     public List<Document> getDocuments(Resource resource) {
-        PagePdfDocumentReader pagePdfDocumentReader = new PagePdfDocumentReader(resource, PdfDocumentReaderConfig.builder()
-                .withPageTopMargin(0)
-                .withPageExtractedTextFormatter(ExtractedTextFormatter.builder()
-                        .withNumberOfTopTextLinesToDelete(0)
-                        .build())
-                .withPagesPerDocument(1)
-                .build());
+        PagePdfDocumentReader pagePdfDocumentReader = new PagePdfDocumentReader(resource);
         return pagePdfDocumentReader.read();
     }
 }
