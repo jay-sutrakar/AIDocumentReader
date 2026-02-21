@@ -1,23 +1,12 @@
-import logo from './logo.svg';
 import './App.css';
+import DocumentUpload from "./components/DocumentUpload";
 
 function App() {
+    const documents = useSelector(state => state.documents.items);
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+        <h1>Upload Document</h1>
+      <DocumentUpload onUpload={(data) => console.log('Uploaded:', data)} />
     </div>
   );
 }

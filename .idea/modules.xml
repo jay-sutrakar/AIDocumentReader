@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/AIDocumentReader.iml" filepath="$PROJECT_DIR$/.idea/AIDocumentReader.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/DocumentReaderService.main.iml" filepath="$PROJECT_DIR$/.idea/modules/DocumentReaderService.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/document_reader_ui/document_reader_ui.iml" filepath="$PROJECT_DIR$/document_reader_ui/document_reader_ui.iml" />
     </modules>
   </component>

@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @RestController
 @RequestMapping("/api/document")
+@CrossOrigin(origins = "http://localhost:3000")
 public class DocumentController {
     private final UploadService uploadService;
     private final ChatService chatService;
@@ -29,6 +30,7 @@ public class DocumentController {
     @PostMapping("/upload")
     public ResponseEntity<UploadResponse> uploadDocument(@RequestParam(value = "file", required = true) MultipartFile file, @RequestHeader(value = "userId", required = true) String userId) {
         if (file.isEmpty()) {
+            log.error("file is empty!");
             return ResponseEntity.badRequest()
                     .contentType(MediaType.APPLICATION_JSON)
                     .build();
@@ -39,6 +41,7 @@ public class DocumentController {
             return ResponseEntity
                     .ok(uploadResponse);
         } catch (Exception e) {
+            log.error("failed to upload document", e);
             return ResponseEntity.internalServerError()
                     .build();
         }
