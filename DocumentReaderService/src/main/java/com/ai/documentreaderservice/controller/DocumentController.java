@@ -1,18 +1,16 @@
 package com.ai.documentreaderservice.controller;
 
+import com.ai.documentreaderservice.model.ChatRequest;
 import com.ai.documentreaderservice.model.UploadResponse;
 import com.ai.documentreaderservice.services.ChatService;
-import com.ai.documentreaderservice.services.RagService;
 import com.ai.documentreaderservice.services.UploadService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @Slf4j
 @RestController
@@ -20,9 +18,12 @@ import java.nio.file.Path;
 public class DocumentController {
     private final UploadService uploadService;
     private final ChatService chatService;
+    private final ObjectMapper objectMapper;
+
     DocumentController(UploadService uploadService, ChatService chatService) {
         this.chatService = chatService;
         this.uploadService = uploadService;
+        this.objectMapper = new ObjectMapper();
     }
 
     @PostMapping("/upload")
@@ -43,9 +44,23 @@ public class DocumentController {
         }
 
     }
-    @GetMapping("/chat")
-    String chat() {
-        return chatService.getResponse();
+    @PostMapping(value = "/chat", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> chat(@RequestParam String query, @RequestBody ChatRequest chatRequest, @RequestHeader(value = "userId") String userId) {
+        long startTime = System.currentTimeMillis();
+        try {
+            if ((chatRequest.message() == null || chatRequest.message().trim().isEmpty()) && query == null) {
+                return ResponseEntity.badRequest().body("Empty message");
+            }
+            String message = query == null ? chatRequest.message() : query;
+            String response = chatService.getResponse(message, userId);
+            log.info("description=\"fetched response successfully\" | duration={}", System.currentTimeMillis() - startTime);
+            return ResponseEntity
+                    .ok().body(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .build();
+        }
     }
 
 }

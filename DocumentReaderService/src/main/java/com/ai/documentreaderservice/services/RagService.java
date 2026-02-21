@@ -1,24 +1,44 @@
 package com.ai.documentreaderservice.services;
 
 import com.ai.documentreaderservice.components.PdfDocumentReader;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStoreRetriever;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.core.io.FileUrlResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class RagService {
     private PdfDocumentReader pdfDocumentReader;
-
-    public RagService(PdfDocumentReader pdfDocumentReader) {
+    private VectorStoreRetriever vectorStoreRetriever;
+    public RagService(PdfDocumentReader pdfDocumentReader, VectorStoreRetriever vectorStoreRetriever) {
         this.pdfDocumentReader = pdfDocumentReader;
+        this.vectorStoreRetriever = vectorStoreRetriever;
     }
 
     public void storeDocument(Path filePath, Map<String, Object> additionalMetadata) {
         Resource resource = FileUrlResource.from(filePath.toUri());
         pdfDocumentReader.readAndStoreDocument(resource, additionalMetadata);
+    }
+
+    public String generateContext(String query, String userId) {
+        FilterExpressionBuilder b = new FilterExpressionBuilder();
+        SearchRequest searchRequest = SearchRequest.builder()
+                .query(query)
+                .topK(1)
+                .filterExpression(b.eq("userId", userId).build())
+                .build();
+        List<Document> documentList = vectorStoreRetriever.similaritySearch(searchRequest);
+        return documentList.stream()
+                .map(Document::getFormattedContent)
+                .collect(Collectors.joining("\n\n"));
     }
 
 

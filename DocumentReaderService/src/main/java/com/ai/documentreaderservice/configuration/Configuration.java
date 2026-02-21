@@ -1,0 +1,15 @@
+package com.ai.documentreaderservice.configuration;
+
+import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.ollama.OllamaEmbeddingModel;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+
+@org.springframework.context.annotation.Configuration
+public class Configuration {
+    @Bean
+    @Primary
+    public EmbeddingModel embeddingModel(OllamaEmbeddingModel ollamaEmbeddingModel) {
+        return ollamaEmbeddingModel;
+    }
+}
