@@ -6,6 +6,8 @@ import lombok.Data;
 @Data
 @Builder
 public class UploadResponse {
+    private String documentId;
     private String userId;
-    private String sessionId;
+    private String fileName;
+    private String uploadedDate;
 }

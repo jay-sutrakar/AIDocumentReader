@@ -43,7 +43,7 @@ public class RagService {
                 .build();
         List<Document> documentList = vectorStoreRetriever.similaritySearch(searchRequest);
         return documentList.stream()
-                .map(Document::getFormattedContent)
+                .map(doc -> doc.getFormattedContent().substring(0, Math.min(1000, doc.getFormattedContent().length())))
                 .collect(Collectors.joining("\n\n"));
     }
 

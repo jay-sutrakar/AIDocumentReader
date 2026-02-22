@@ -1,6 +1,7 @@
 package com.ai.documentreaderservice.controller;
 
 import com.ai.documentreaderservice.model.ChatRequest;
+import com.ai.documentreaderservice.model.ChatResponse;
 import com.ai.documentreaderservice.model.UploadResponse;
 import com.ai.documentreaderservice.services.ChatService;
 import com.ai.documentreaderservice.services.UploadService;
@@ -37,7 +38,7 @@ public class DocumentController {
         }
         try {
             UploadResponse uploadResponse = uploadService.uploadDocument(file, userId);
-            log.info("logType=tracking | userId={} | sessionId={}", uploadResponse.getUserId(), uploadResponse.getSessionId());
+            log.info("logType=tracking | userId={} | documentId={}", uploadResponse.getUserId(), uploadResponse.getDocumentId());
             return ResponseEntity
                     .ok(uploadResponse);
         } catch (Exception e) {
@@ -48,17 +49,17 @@ public class DocumentController {
 
     }
     @PostMapping(value = "/chat", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> chat(@RequestParam String query, @RequestBody ChatRequest chatRequest, @RequestHeader(value = "userId") String userId) {
+    public ResponseEntity<ChatResponse> chat(@RequestParam String query, @RequestBody ChatRequest chatRequest, @RequestHeader(value = "userId") String userId) {
         long startTime = System.currentTimeMillis();
         try {
             if ((chatRequest.message() == null || chatRequest.message().trim().isEmpty()) && query == null) {
-                return ResponseEntity.badRequest().body("Empty message");
+                return ResponseEntity.badRequest().build();
             }
             String message = query == null ? chatRequest.message() : query;
             String response = chatService.getResponse(message, userId);
             log.info("description=\"fetched response successfully\" | duration={}", System.currentTimeMillis() - startTime);
             return ResponseEntity
-                    .ok().body(response);
+                    .ok().body(new ChatResponse(response));
 
         } catch (Exception e) {
             return ResponseEntity.internalServerError()

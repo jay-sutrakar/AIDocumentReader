@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
 import DocumentUpload from './DocumentUpload';
-import {FileText, Upload} from "lucide-react";
+import {FileText, Upload, MessageCircle} from "lucide-react";
 
-export default function UploadView({ documents, onUpload, onChatOpen }) {
+export default function UploadView({ documents, onChatOpen }) {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -28,22 +28,46 @@ export default function UploadView({ documents, onUpload, onChatOpen }) {
                 </div>
             </motion.div>
 
-            <DocumentUpload
-                onUpload={(data) => {
-                    onUpload(data);
+             <DocumentUpload
+                onUpload={() => {
                     onChatOpen();
                 }}
             />
             {documents.length > 0 && (
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-emerald-400 flex items-center gap-2 justify-center"
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col items-center space-y-4 pt-6 border-t border-white/10"
                 >
-                    <Upload className="w-5 h-5" />
-                    {documents.length} document(s) ready for chat
-                </motion.p>
+                    {/* Status Message */}
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-emerald-400 flex items-center gap-2 text-lg font-medium"
+                    >
+                        <Upload className="w-5 h-5" />
+                        {documents.length} document(s) ready for chat
+                    </motion.p>
+
+                    {/* Start Chat Button */}
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={onChatOpen}
+                        className="
+                px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600
+                hover:from-emerald-600 hover:to-teal-700
+                text-white font-semibold text-lg rounded-2xl shadow-xl
+                hover:shadow-2xl hover:-translate-y-1 transition-all duration-200
+                flex items-center gap-3 ring-2 ring-emerald-500/30
+            "
+                    >
+                        <MessageCircle className="w-6 h-6" />
+                        Start Chatting
+                    </motion.button>
+                </motion.div>
             )}
+
         </motion.div>
     );
 }

@@ -12,7 +12,7 @@ const documentsSlice = createSlice({
         },
         uploadDocumentsSuccess: (state, action) => {
             state.status = 'succeeded';
-            state.items.push(...action.payload);
+            state.items.push(action.payload);
         },
         uploadDocumentsFailure: (state) => {
             state.status = 'failed';

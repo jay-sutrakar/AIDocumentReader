@@ -9,6 +9,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -26,18 +29,22 @@ public class UploadService {
         try {
             validateFile(file);
             if (!StringUtils.hasText(userId)) {
+                log.error("Userid is not present.");
                 throw new RuntimeException("Userid can not be empty.");
             }
             tempPath = Files.createTempFile("upload-", file.getOriginalFilename());
             file.transferTo(tempPath);
-            String sessionId = UUID.randomUUID().toString();
+            String documentId = UUID.randomUUID().toString();
             Map<String, Object> additionalMetadata = new HashMap<>();
             additionalMetadata.put("userId", userId);
-            additionalMetadata.put("sessionId", sessionId);
+            additionalMetadata.put("documentId", documentId);
             ragService.storeDocument(tempPath, additionalMetadata);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
             return UploadResponse.builder()
                     .userId(userId)
-                    .sessionId(sessionId)
+                    .documentId(documentId)
+                    .fileName(file.getOriginalFilename())
+                    .uploadedDate(LocalDate.now().format(formatter))
                     .build();
         } catch (Exception e) {
             log.error("className={}", this.getClass().getSimpleName(),e);

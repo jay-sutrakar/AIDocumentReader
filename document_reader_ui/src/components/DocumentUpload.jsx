@@ -62,13 +62,15 @@ const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) =>
             });
             if (response.ok) {
                 const data = await response.json();
-                onUpload?.(data);
+                onUpload();
+                console.log(data);
                 dispatch(uploadDocumentsSuccess(
-                    data.map(item => ({
-                        id: uuidv4(),
-                        uploadedAt: new Date().toISOString(),
-                        ...item
-                    }))
+                    {
+                       id: data.documentId,
+                       userId: data.userId,
+                       uploadedAt: data.uploadedDate,
+                       fileName: data.fileName,
+                    }
                 ));
                 setFiles([]);
             }
