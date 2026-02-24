@@ -29,7 +29,7 @@ public class UploadService {
         Path tempPath = null;
         try {
             validateFile(file);
-            if (!StringUtils.hasText(userId)) {
+            if (!StringUtils.hasText(userId) && !StringUtils.hasText(sessionId)) {
                 log.error("Userid is not present.");
                 throw new RuntimeException("Userid can not be empty.");
             }
@@ -46,6 +46,7 @@ public class UploadService {
                     .userId(userId)
                     .documentId(documentId)
                     .fileName(file.getOriginalFilename())
+                    .sessionId(sessionId)
                     .uploadedDate(LocalDate.now().format(formatter))
                     .build();
         } catch (Exception e) {
@@ -54,7 +55,7 @@ public class UploadService {
         } finally {
             try {
                 Files.deleteIfExists(tempPath);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 log.error("description=\"failed to delete temp file.\"", e);
             }
         }

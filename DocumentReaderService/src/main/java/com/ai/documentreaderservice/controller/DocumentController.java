@@ -98,9 +98,12 @@ public class DocumentController {
     }
 
     @GetMapping(value = "/uploaded-documents", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<DocumentMetadata>> getUploadedDocuments(@RequestParam(value = "userId") String userId) {
+    public ResponseEntity<List<DocumentMetadata>> getUploadedDocuments(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "sessionId", required = false) String sessionId) {
         try {
-            List<DocumentMetadata> documentMetadataList = documentService.getDocuments(userId);
+            if (userId == null && sessionId == null) {
+                return ResponseEntity.badRequest().build();
+            }
+            List<DocumentMetadata> documentMetadataList = documentService.getDocuments(userId, sessionId);
             return ResponseEntity.ok(documentMetadataList);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();

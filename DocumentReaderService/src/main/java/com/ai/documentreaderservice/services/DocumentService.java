@@ -18,7 +18,7 @@ public class DocumentService {
     }
 
     public String uploadDocumentMetadata(String fileName, String userId, String sessionId) {
-       UUID userUUId = UUID.fromString(userId);
+       UUID userUUId = userId == null ? null : UUID.fromString(userId);
        UUID sessionUUId = sessionId == null ? null : UUID.fromString(sessionId);
        String documentId = jdbcTemplate.queryForObject(QueryUtil.CREATE_DOCUMENT_METADATA, (res, idx) ->
             res.getString("id")
@@ -27,15 +27,18 @@ public class DocumentService {
        return documentId;
     }
 
-    public List<DocumentMetadata> getDocuments(String userId) {
+    public List<DocumentMetadata> getDocuments(String userId, String sessionId) {
+        UUID sessionUUid = sessionId == null ? null : UUID.fromString(sessionId);
+        UUID userUUid = userId == null ? null : UUID.fromString(userId);
         List<DocumentMetadata> documentMetadataList = jdbcTemplate.query(QueryUtil.GET_USER_DOCUMENTS, (res, idx) -> {
             return DocumentMetadata.builder()
                     .fileName(res.getString("file_name"))
                     .id(res.getString("id"))
                     .userId(userId)
+                    .sessionId(res.getString("session_id"))
                     .createdAt(res.getString("created_at"))
                     .build();
-        }, UUID.fromString(userId));
+        }, userUUid, sessionUUid);
         log.info("fetched document metadata list");
         return documentMetadataList;
     }

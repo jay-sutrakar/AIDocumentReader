@@ -10,4 +10,5 @@ public class UploadResponse {
     private String userId;
     private String fileName;
     private String uploadedDate;
+    private String sessionId;
 }

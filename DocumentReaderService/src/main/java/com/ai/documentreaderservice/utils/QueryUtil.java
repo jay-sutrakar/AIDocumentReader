@@ -12,7 +12,7 @@ public class QueryUtil {
             (session_id, document_id, role, content) 
                VALUES (?, ?, ?, ?)""";
     public static final String GET_USER_DOCUMENTS = """
-            SELECT * FROM public.document_metadata WHERE user_id = ?;
+            SELECT * FROM public.document_metadata WHERE user_id = ? or session_id = ?;
             """;
     public static final String CREATE_DOCUMENT_METADATA = """
             INSERT INTO public.document_metadata (user_id, session_id, file_name)
