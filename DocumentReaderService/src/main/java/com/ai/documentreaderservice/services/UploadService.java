@@ -1,5 +1,6 @@
 package com.ai.documentreaderservice.services;
 
+import com.ai.documentreaderservice.model.DocumentMetadata;
 import com.ai.documentreaderservice.model.UploadResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,8 +21,10 @@ import java.util.UUID;
 public class UploadService {
 
     private final RagService ragService;
-    public UploadService(RagService ragService) {
+    private final DocumentService documentService;
+    public UploadService(RagService ragService, DocumentService documentService) {
         this.ragService = ragService;
+        this.documentService = documentService;
     }
 
     public UploadResponse uploadDocument(MultipartFile file, String userId) {
@@ -34,7 +37,7 @@ public class UploadService {
             }
             tempPath = Files.createTempFile("upload-", file.getOriginalFilename());
             file.transferTo(tempPath);
-            String documentId = UUID.randomUUID().toString();
+            String documentId = documentService.uploadDocumentMetadata(userId, file.getOriginalFilename());
             Map<String, Object> additionalMetadata = new HashMap<>();
             additionalMetadata.put("userId", userId);
             additionalMetadata.put("documentId", documentId);

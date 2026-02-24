@@ -1,17 +1,20 @@
 package com.ai.documentreaderservice.controller;
 
-import com.ai.documentreaderservice.model.ChatRequest;
-import com.ai.documentreaderservice.model.ChatResponse;
-import com.ai.documentreaderservice.model.UploadResponse;
+import com.ai.documentreaderservice.model.*;
 import com.ai.documentreaderservice.services.ChatService;
+import com.ai.documentreaderservice.services.DocumentService;
+import com.ai.documentreaderservice.services.SessionService;
 import com.ai.documentreaderservice.services.UploadService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -20,16 +23,19 @@ import org.springframework.web.multipart.MultipartFile;
 public class DocumentController {
     private final UploadService uploadService;
     private final ChatService chatService;
-    private final ObjectMapper objectMapper;
+    private final SessionService sessionService;
+    private final DocumentService documentService;
 
-    DocumentController(UploadService uploadService, ChatService chatService) {
+    DocumentController(UploadService uploadService, ChatService chatService, SessionService sessionService, DocumentService documentService) {
         this.chatService = chatService;
         this.uploadService = uploadService;
-        this.objectMapper = new ObjectMapper();
+        this.sessionService = sessionService;
+        this.documentService = documentService;
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<UploadResponse> uploadDocument(@RequestParam(value = "file", required = true) MultipartFile file, @RequestHeader(value = "userId", required = true) String userId) {
+    public ResponseEntity<UploadResponse> uploadDocument(HttpServletRequest request, @RequestParam(value = "file", required = true) MultipartFile file, @RequestHeader(value = "userId", required = true) String userId) {
+        String sessionId = sessionService.createOrGetSessionId(request, userId);
         if (file.isEmpty()) {
             log.error("file is empty!");
             return ResponseEntity.badRequest()
@@ -57,14 +63,48 @@ public class DocumentController {
             }
             String message = query == null ? chatRequest.message() : query;
             String response = chatService.getResponse(message, userId);
+            ChatMessage userChatMessage = ChatMessage
+                    .builder()
+                    .role("user")
+                    .content(query)
+                    .documentId(chatRequest.documentId())
+                    .build();
+            ChatMessage aiChatMessage = ChatMessage
+                    .builder()
+                    .role("ai")
+                    .content(response)
+                    .documentId(chatRequest.documentId())
+                    .build();
+            chatService.updateChatHistory(userChatMessage);
+            chatService.updateChatHistory(aiChatMessage);
             log.info("description=\"fetched response successfully\" | duration={}", System.currentTimeMillis() - startTime);
             return ResponseEntity
                     .ok().body(new ChatResponse(response));
-
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
                     .build();
         }
     }
+    @GetMapping(value = "/chat-history", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<ChatMessage>> getChatHistory(@RequestParam(value = "documentId") String documentId) {
+        try {
+            List<ChatMessage> chatHistories = chatService.getChatHistory(documentId);
+            log.info("Successfully fetched chat history");
+            return ResponseEntity.ok(chatHistories);
+        } catch (Exception e) {
+            log.error("failed to fetch chat history.", e);
+            return ResponseEntity.internalServerError()
+                    .build();
+        }
+    }
 
+    @GetMapping(value = "/uploaded-documents", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<DocumentMetadata>> getUploadedDocuments(@RequestParam(value = "userId") String userId) {
+        try {
+            List<DocumentMetadata> documentMetadataList = documentService.getDocuments(userId);
+            return ResponseEntity.ok(documentMetadataList);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }
