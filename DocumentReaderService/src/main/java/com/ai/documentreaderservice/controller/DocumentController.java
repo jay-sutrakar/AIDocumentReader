@@ -5,12 +5,11 @@ import com.ai.documentreaderservice.services.ChatService;
 import com.ai.documentreaderservice.services.DocumentService;
 import com.ai.documentreaderservice.services.SessionService;
 import com.ai.documentreaderservice.services.UploadService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,14 +33,14 @@ public class DocumentController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<UploadResponse> uploadDocument(HttpServletRequest request, @RequestParam(value = "file", required = true) MultipartFile file, @RequestHeader(value = "userId", required = true) String userId) {
-        String sessionId = sessionService.createOrGetSessionId(request, userId);
+    public ResponseEntity<UploadResponse> uploadDocument(HttpServletRequest request, @RequestParam(value = "file", required = true) MultipartFile file, @RequestHeader(value = "userId", required = false) String userId) {
         if (file.isEmpty()) {
             log.error("file is empty!");
             return ResponseEntity.badRequest()
                     .contentType(MediaType.APPLICATION_JSON)
                     .build();
         }
+        String sessionId = sessionService.createOrGetSessionId(request, userId);
         try {
             UploadResponse uploadResponse = uploadService.uploadDocument(file, userId);
             log.info("logType=tracking | userId={} | documentId={}", uploadResponse.getUserId(), uploadResponse.getDocumentId());
@@ -55,18 +54,18 @@ public class DocumentController {
 
     }
     @PostMapping(value = "/chat", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ChatResponse> chat(@RequestParam String query, @RequestBody ChatRequest chatRequest, @RequestHeader(value = "userId") String userId) {
+    public ResponseEntity<ChatResponse> chat(String query, @RequestBody ChatRequest chatRequest, @RequestHeader(value = "userId") String userId) {
         long startTime = System.currentTimeMillis();
         try {
-            if ((chatRequest.message() == null || chatRequest.message().trim().isEmpty()) && query == null) {
+            if (!StringUtils.hasText(chatRequest.message()) || chatRequest.documentId() == null) {
                 return ResponseEntity.badRequest().build();
             }
-            String message = query == null ? chatRequest.message() : query;
-            String response = chatService.getResponse(message, userId);
+
+            String response = chatService.getResponse(chatRequest.message(), userId, chatRequest.sessionId());
             ChatMessage userChatMessage = ChatMessage
                     .builder()
                     .role("user")
-                    .content(query)
+                    .content(chatRequest.message())
                     .documentId(chatRequest.documentId())
                     .build();
             ChatMessage aiChatMessage = ChatMessage

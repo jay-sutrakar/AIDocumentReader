@@ -33,6 +33,7 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-advisors-vector-store'
     // Dependency required for reading pdf file and convert it for vector store
     implementation 'org.springframework.ai:spring-ai-pdf-document-reader'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 //    developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     compileOnly("org.projectlombok:lombok:1.18.42")

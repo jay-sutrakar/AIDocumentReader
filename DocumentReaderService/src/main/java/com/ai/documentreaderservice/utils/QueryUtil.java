@@ -15,7 +15,12 @@ public class QueryUtil {
             SELECT * FROM public.document_metadata WHERE user_id = ?;
             """;
     public static final String CREATE_DOCUMENT_METADATA = """
-            INSERT INTO public.document_metadata (user_id, file_name)
+            INSERT INTO public.document_metadata (user_id, session_id, file_name)
+                VALUES (?, ?, ?) RETURNING id
+            """;
+    public static final String CREATE_SESSION_METADATA = """
+            INSERT INTO public.sessions (user_id, expires_at)
                 VALUES (?, ?) RETURNING id
             """;
+
 }

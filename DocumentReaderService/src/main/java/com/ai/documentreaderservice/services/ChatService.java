@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -31,9 +32,9 @@ public class ChatService {
     }
 
 
-    public String getResponse(String query, String userId) {
+    public String getResponse(String query, String userId, String sessionId) {
         try {
-            String context = ragService.generateContext(query, userId);
+            String context = ragService.generateContext(query, userId, sessionId);
             log.info("description=\"fetched context successfully\" | contextLength={}", context.length());
             Prompt prompt = PromptUtil.getPromptForChatting(context, query, new HashMap<>());
             String response = chatClient.prompt(prompt)
@@ -55,10 +56,14 @@ public class ChatService {
                     .content(response.getString("content"))
                     .createdAt(response.getString("created_at"))
                     .build();
-        }, documentId);
+        }, UUID.fromString(documentId));
     }
 
     public void updateChatHistory(ChatMessage chatMessage) {
-        jdbcTemplate.update(QueryUtil.CREATE_CHAT_HISTORY, chatMessage.getSessionId(), chatMessage.getDocumentId(),chatMessage.getRole(), chatMessage.getContent());
+        try {
+            jdbcTemplate.update(QueryUtil.CREATE_CHAT_HISTORY, chatMessage.getSessionId(), chatMessage.getDocumentId(), chatMessage.getRole(), chatMessage.getContent());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

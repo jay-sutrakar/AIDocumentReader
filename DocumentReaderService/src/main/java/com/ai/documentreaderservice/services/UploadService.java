@@ -11,11 +11,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 @Slf4j
 @Service
 public class UploadService {
@@ -27,7 +25,7 @@ public class UploadService {
         this.documentService = documentService;
     }
 
-    public UploadResponse uploadDocument(MultipartFile file, String userId) {
+    public UploadResponse uploadDocument(MultipartFile file, String userId, String sessionId) {
         Path tempPath = null;
         try {
             validateFile(file);
@@ -37,9 +35,10 @@ public class UploadService {
             }
             tempPath = Files.createTempFile("upload-", file.getOriginalFilename());
             file.transferTo(tempPath);
-            String documentId = documentService.uploadDocumentMetadata(userId, file.getOriginalFilename());
+            String documentId = documentService.uploadDocumentMetadata(file.getOriginalFilename(), userId, sessionId);
             Map<String, Object> additionalMetadata = new HashMap<>();
             additionalMetadata.put("userId", userId);
+            additionalMetadata.put("sessionId", sessionId);
             additionalMetadata.put("documentId", documentId);
             ragService.storeDocument(tempPath, additionalMetadata);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");

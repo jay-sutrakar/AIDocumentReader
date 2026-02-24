@@ -34,12 +34,14 @@ public class RagService {
         }
     }
 
-    public String generateContext(String query, String userId) {
+    public String generateContext(String query, String userId, String sessionId) {
         FilterExpressionBuilder b = new FilterExpressionBuilder();
+
+
         SearchRequest searchRequest = SearchRequest.builder()
                 .query(query)
                 .topK(1)
-                .filterExpression(b.eq("userId", userId).build())
+                .filterExpression(b.or(b.eq("userId", userId), b.eq("sessionId", sessionId)).build())
                 .build();
         List<Document> documentList = vectorStoreRetriever.similaritySearch(searchRequest);
         return documentList.stream()
