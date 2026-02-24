@@ -42,7 +42,7 @@ public class DocumentController {
         }
         String sessionId = sessionService.createOrGetSessionId(request, userId);
         try {
-            UploadResponse uploadResponse = uploadService.uploadDocument(file, userId);
+            UploadResponse uploadResponse = uploadService.uploadDocument(file, userId, sessionId);
             log.info("logType=tracking | userId={} | documentId={}", uploadResponse.getUserId(), uploadResponse.getDocumentId());
             return ResponseEntity
                     .ok(uploadResponse);
