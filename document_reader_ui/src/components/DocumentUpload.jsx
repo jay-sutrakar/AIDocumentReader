@@ -1,11 +1,13 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { uploadDocumentsStart, uploadDocumentsSuccess, uploadDocumentsFailure } from '../redux/documentsSlice';
 import { v4 as uuidv4 } from 'uuid';
-import { useDispatch } from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import { UploadCloud, X, Loader2 } from 'lucide-react';  // npm i lucide-react
 
 const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) => {
     const dispatch = useDispatch();
+    const {userId, isUserLoggedIn} = useSelector((state) => state.auth);
+    const documents = useSelector((state) => state.documents.items);
     const [files, setFiles] = useState([]);
     const [uploading, setUploading] = useState(false);
     const [dragActive, setDragActive] = useState(false);
@@ -51,26 +53,28 @@ const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) =>
         setUploading(true);
         const formData = new FormData();
         files.forEach(file => formData.append('file', file));
+        const headers = {};
+        if (userId != null) {
+            headers['userId'] = userId;
+        }
 
         try {
             const response = await fetch('http://localhost:7070/api/document/upload', {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'userId': uuidv4(),
-                }
+                headers: headers,
             });
             if (response.ok) {
                 const data = await response.json();
                 onUpload();
                 console.log(data);
-                dispatch(uploadDocumentsSuccess(
+                dispatch(uploadDocumentsSuccess([
                     {
                        id: data.documentId,
                        userId: data.userId,
                        uploadedAt: data.uploadedDate,
                        fileName: data.fileName,
-                    }
+                    }]
                 ));
                 setFiles([]);
             }
@@ -167,7 +171,7 @@ const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) =>
                     {/* Upload Button */}
                     <button
                         onClick={uploadFiles}
-                        disabled={uploading || !files.length}
+                        disabled={uploading || !files.length || (isUserLoggedIn && documents.length === 1)}
                         className="
                             w-full py-4 px-8 rounded-2xl font-semibold text-lg
                             bg-gradient-to-r from-emerald-500 to-teal-600

@@ -67,7 +67,6 @@ export default function UploadView({ documents, onChatOpen }) {
                     </motion.button>
                 </motion.div>
             )}
-
         </motion.div>
     );
 }
