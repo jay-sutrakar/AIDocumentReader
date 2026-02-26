@@ -171,7 +171,7 @@ const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) =>
                     {/* Upload Button */}
                     <button
                         onClick={uploadFiles}
-                        disabled={uploading || !files.length || (isUserLoggedIn && documents.length === 1)}
+                        disabled={uploading || !files.length || (!isUserLoggedIn && documents.length === 1)}
                         className="
                             w-full py-4 px-8 rounded-2xl font-semibold text-lg
                             bg-gradient-to-r from-emerald-500 to-teal-600

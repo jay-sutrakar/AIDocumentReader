@@ -19,9 +19,9 @@ function App() {
     const {userId, sessionId} = useSelector((state) => state.auth);
 
     const transformDateFormate = (date) => {
-        const [day, month, year] = date.split('-').map(Number);
-        const transformedDate = new Date(year, month - 1, day);
-        return transformedDate.toLocaleDateString("en-US");
+        // const [day, month, year] = date.split('-').map(Number);
+        // const transformedDate = new Date(year, month - 1, day);
+        return date;
     }
     const fetchDocuments = async (userId) => {
         try {
@@ -33,15 +33,19 @@ function App() {
             if (sessionId != null) {
                 headers['sessionId'] = sessionId;
             }
-            const response = await fetch("http://localhost:7070/api/document/uploaded-documents", {
-                method: "GET",
-                headers: headers
+            const url = new URL("http://localhost:7070/api/document/uploaded-documents");
+            if (userId != null) {
+                url.searchParams.set("userId", userId);
+            }
+            if (sessionId != null) {
+                url.searchParams.set("sessionId", sessionId);
+            }
+            const response = await fetch(url.toString(), {
+                method: "GET"
             });
             const data = await response.json();
-            console.log(data);
             if (response.ok) {
-                console.log(data)
-                // dispatch(uploadDocumentsSuccess(data))
+                dispatch(uploadDocumentsSuccess(data))
             }
         } catch (error) {
 
@@ -70,6 +74,7 @@ function App() {
     const handleLogout = () => {
         localStorage.removeItem("userId");
         dispatch(logout({}))
+        dispatch(uploadDocumentsSuccess([]))
         setIsLoggedIn(false);
     };
     // Add to App.jsx state
