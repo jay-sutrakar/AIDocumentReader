@@ -51,7 +51,7 @@ public class ChatService {
        return jdbcTemplate.query(QueryUtil.GET_CHAT_HISTORY, (response, index) -> {
             return ChatMessage.builder()
                     .documentId(documentId)
-                    .sessionId(response.getString("sesssion_id"))
+                    .sessionId(response.getString("session_id"))
                     .role(response.getString("role"))
                     .content(response.getString("content"))
                     .createdAt(response.getString("created_at"))
@@ -61,8 +61,11 @@ public class ChatService {
 
     public void updateChatHistory(ChatMessage chatMessage) {
         try {
-            jdbcTemplate.update(QueryUtil.CREATE_CHAT_HISTORY, chatMessage.getSessionId(), chatMessage.getDocumentId(), chatMessage.getRole(), chatMessage.getContent());
+            UUID sessionId = UUID.fromString(chatMessage.getSessionId());
+            UUID documentId = UUID.fromString(chatMessage.getDocumentId());
+            jdbcTemplate.update(QueryUtil.CREATE_CHAT_HISTORY, sessionId, documentId, chatMessage.getRole(), chatMessage.getContent());
         } catch (Exception e) {
+            log.error("failed to update chat history", e);
             throw new RuntimeException(e);
         }
     }

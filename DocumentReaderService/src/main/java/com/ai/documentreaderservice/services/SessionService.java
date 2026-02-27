@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -17,16 +18,11 @@ public class SessionService {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public String createOrGetSessionId(HttpServletRequest request, String userId) {
-        String sessionId = UUID.randomUUID().toString();
-
-        if (sessionId != null) {
-            return sessionId;
-        }
-        UUID userUuid = userId == null ? null : UUID.fromString(userId);
-        jdbcTemplate.query(QueryUtil.CREATE_SESSION_METADATA, (res, idx) -> res.getString("id"), userUuid, LocalDateTime.now().plusDays(1));
+    public String createOrGetSessionId(String userId) {
+       UUID userUuid = userId == null ? null : UUID.fromString(userId);
+       List<String> sessionId = jdbcTemplate.query(QueryUtil.CREATE_SESSION_METADATA, (res, idx) -> res.getString("id"), userUuid, LocalDateTime.now().plusDays(1));
         log.info("Successfully created session. | sessionId={}", sessionId);
-        return sessionId;
+        return sessionId.get(0);
     }
 
 }

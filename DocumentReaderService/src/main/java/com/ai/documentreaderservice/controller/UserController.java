@@ -1,6 +1,7 @@
 package com.ai.documentreaderservice.controller;
 
 import com.ai.documentreaderservice.model.AuthRequest;
+import com.ai.documentreaderservice.services.SessionService;
 import com.ai.documentreaderservice.services.UserService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +15,10 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
     private final UserService userService;
-    public UserController(UserService userService) {
+    private final SessionService sessionService;
+    public UserController(UserService userService, SessionService sessionService) {
         this.userService = userService;
+        this.sessionService = sessionService;
     }
 
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -43,8 +46,8 @@ public class UserController {
         }
         try {
             String userId = userService.getUser(authRequest.email());
-
-            return ResponseEntity.ok(Map.of("userId", userId));
+            String sessionId = sessionService.createOrGetSessionId(userId);
+            return ResponseEntity.ok(Map.of("userId", userId, "sessionId", sessionId));
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
                     .build();

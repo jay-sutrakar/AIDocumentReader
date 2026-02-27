@@ -33,15 +33,16 @@ public class DocumentController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<UploadResponse> uploadDocument(HttpServletRequest request, @RequestParam(value = "file", required = true) MultipartFile file, @RequestHeader(value = "userId", required = false) String userId) {
+    public ResponseEntity<UploadResponse> uploadDocument(@RequestParam(value = "file", required = true) MultipartFile file, @RequestHeader(value = "userId", required = false) String userId, @RequestHeader(value = "sessionId", required = false) String sessionId) {
         if (file.isEmpty()) {
             log.error("file is empty!");
             return ResponseEntity.badRequest()
                     .contentType(MediaType.APPLICATION_JSON)
                     .build();
         }
-        String sessionId = sessionService.createOrGetSessionId(request, userId);
         try {
+            if (sessionId == null)
+                sessionId = sessionService.createOrGetSessionId(userId);
             UploadResponse uploadResponse = uploadService.uploadDocument(file, userId, sessionId);
             log.info("logType=tracking | userId={} | documentId={}", uploadResponse.getUserId(), uploadResponse.getDocumentId());
             return ResponseEntity
@@ -54,7 +55,7 @@ public class DocumentController {
 
     }
     @PostMapping(value = "/chat", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ChatResponse> chat(String query, @RequestBody ChatRequest chatRequest, @RequestHeader(value = "userId") String userId) {
+    public ResponseEntity<ChatResponse> chat(@RequestBody ChatRequest chatRequest, @RequestHeader(value = "userId") String userId) {
         long startTime = System.currentTimeMillis();
         try {
             if (!StringUtils.hasText(chatRequest.message()) || chatRequest.documentId() == null) {
@@ -67,11 +68,13 @@ public class DocumentController {
                     .role("user")
                     .content(chatRequest.message())
                     .documentId(chatRequest.documentId())
+                    .sessionId(chatRequest.sessionId())
                     .build();
             ChatMessage aiChatMessage = ChatMessage
                     .builder()
                     .role("ai")
                     .content(response)
+                    .sessionId(chatRequest.sessionId())
                     .documentId(chatRequest.documentId())
                     .build();
             chatService.updateChatHistory(userChatMessage);
