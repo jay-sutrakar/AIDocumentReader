@@ -5,7 +5,6 @@ import com.ai.documentreaderservice.services.ChatService;
 import com.ai.documentreaderservice.services.DocumentService;
 import com.ai.documentreaderservice.services.SessionService;
 import com.ai.documentreaderservice.services.UploadService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -33,7 +33,7 @@ public class DocumentController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<UploadResponse> uploadDocument(@RequestParam(value = "file", required = true) MultipartFile file, @RequestHeader(value = "userId", required = false) String userId, @RequestHeader(value = "sessionId", required = false) String sessionId) {
+    public ResponseEntity<?> uploadDocument(@RequestParam(value = "file", required = true) MultipartFile file, @RequestHeader(value = "userId", required = false) String userId, @RequestHeader(value = "sessionId", required = false) String sessionId) {
         if (file.isEmpty()) {
             log.error("file is empty!");
             return ResponseEntity.badRequest()
@@ -49,13 +49,14 @@ public class DocumentController {
                     .ok(uploadResponse);
         } catch (Exception e) {
             log.error("failed to upload document", e);
-            return ResponseEntity.internalServerError()
-                    .build();
+            return ResponseEntity
+                    .internalServerError()
+                    .body(Map.of("error_message", e.getMessage()));
         }
 
     }
     @PostMapping(value = "/chat", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ChatResponse> chat(@RequestBody ChatRequest chatRequest, @RequestHeader(value = "userId") String userId) {
+    public ResponseEntity<?> chat(@RequestBody ChatRequest chatRequest, @RequestHeader(value = "userId") String userId) {
         long startTime = System.currentTimeMillis();
         try {
             if (!StringUtils.hasText(chatRequest.message()) || chatRequest.documentId() == null) {
@@ -84,11 +85,11 @@ public class DocumentController {
                     .ok().body(new ChatResponse(response));
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
-                    .build();
+                    .body(Map.of("error_message", e.getMessage()));
         }
     }
     @GetMapping(value = "/chat-history", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<ChatMessage>> getChatHistory(@RequestParam(value = "documentId") String documentId) {
+    public ResponseEntity<?> getChatHistory(@RequestParam(value = "documentId") String documentId) {
         try {
             List<ChatMessage> chatHistories = chatService.getChatHistory(documentId);
             log.info("Successfully fetched chat history");
@@ -96,7 +97,7 @@ public class DocumentController {
         } catch (Exception e) {
             log.error("failed to fetch chat history.", e);
             return ResponseEntity.internalServerError()
-                    .build();
+                    .body(Map.of("user_message", e.getMessage()));
         }
     }
 
@@ -110,6 +111,17 @@ public class DocumentController {
             return ResponseEntity.ok(documentMetadataList);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @DeleteMapping(value = "/delete")
+    public ResponseEntity<?> deleteDocument(@RequestParam(value = "documentId") String documentId, @RequestParam(value = "userId") String userId) {
+        try {
+            documentService.deleteDocument(userId, documentId);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error_message", e.getMessage()));
         }
     }
 }

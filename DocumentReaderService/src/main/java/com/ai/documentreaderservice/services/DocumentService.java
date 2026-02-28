@@ -13,8 +13,10 @@ import java.util.UUID;
 @Slf4j
 public class DocumentService {
     private final JdbcTemplate jdbcTemplate;
-    public DocumentService(JdbcTemplate jdbcTemplate) {
+    private final RagService ragService;
+    public DocumentService(JdbcTemplate jdbcTemplate, RagService ragService) {
         this.jdbcTemplate = jdbcTemplate;
+        this.ragService = ragService;
     }
 
     public String uploadDocumentMetadata(String fileName, String userId, String sessionId) {
@@ -41,5 +43,18 @@ public class DocumentService {
         }, userUUid, sessionUUid);
         log.info("fetched document metadata list");
         return documentMetadataList;
+    }
+
+    public void deleteDocument(String userId, String documentId) {
+        if (userId == null) {
+            throw new RuntimeException("User id is required to delete the document.");
+        }
+        if (documentId == null) {
+            throw new RuntimeException("Document id is required to delete the document.");
+        }
+
+        ragService.deleteDocumentEmbeddings(documentId);
+        jdbcTemplate.query(QueryUtil.DELETE_CHAT_HISTORY, (row, idx) -> idx, documentId);
+        jdbcTemplate.query(QueryUtil.DELETE_DOCUMENT_METADATA, (row, idx) -> idx, documentId);
     }
 }
