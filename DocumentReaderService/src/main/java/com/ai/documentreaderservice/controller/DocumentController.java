@@ -84,6 +84,7 @@ public class DocumentController {
             return ResponseEntity
                     .ok().body(new ChatResponse(response));
         } catch (Exception e) {
+            log.error("failed to create chat!", e);
             return ResponseEntity.internalServerError()
                     .body(Map.of("error_message", e.getMessage()));
         }
@@ -102,7 +103,7 @@ public class DocumentController {
     }
 
     @GetMapping(value = "/uploaded-documents", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<DocumentMetadata>> getUploadedDocuments(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "sessionId", required = false) String sessionId) {
+    public ResponseEntity<?> getUploadedDocuments(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "sessionId", required = false) String sessionId) {
         try {
             if (userId == null && sessionId == null) {
                 return ResponseEntity.badRequest().build();
@@ -110,7 +111,10 @@ public class DocumentController {
             List<DocumentMetadata> documentMetadataList = documentService.getDocuments(userId, sessionId);
             return ResponseEntity.ok(documentMetadataList);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            log.error("failed to fetch uploaded document list", e);
+            return ResponseEntity
+                    .internalServerError()
+                    .body(Map.of("error_message", e.getMessage()));
         }
     }
 

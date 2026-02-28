@@ -23,8 +23,8 @@ public class QueryUtil {
                 VALUES (?, ?) RETURNING id
             """;
 
-    public static final String DELETE_CHAT_HISTORY = "DELETE FROM public.chat_history WHERE document_id=? RETURNING id";
-    public static final String DELETE_DOCUMENT_METADATA = "DELETE FROM public.document_metadata WHERE document_id=? RETURNING id";
+    public static final String DELETE_CHAT_HISTORY = "DELETE FROM public.chat_history WHERE document_id=?";
+    public static final String DELETE_DOCUMENT_METADATA = "DELETE FROM public.document_metadata WHERE id=?";
 
 
 }

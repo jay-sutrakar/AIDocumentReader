@@ -3,6 +3,7 @@ package com.ai.documentreaderservice.controller;
 import com.ai.documentreaderservice.model.AuthRequest;
 import com.ai.documentreaderservice.services.SessionService;
 import com.ai.documentreaderservice.services.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -13,6 +14,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/user")
 @CrossOrigin(origins = "http://localhost:3000")
+@Slf4j
 public class UserController {
     private final UserService userService;
     private final SessionService sessionService;
@@ -22,7 +24,7 @@ public class UserController {
     }
 
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> createUser(@RequestBody AuthRequest authRequest) {
+    public ResponseEntity<?> createUser(@RequestBody AuthRequest authRequest) {
         if (!StringUtils.hasText(authRequest.email())) {
             return ResponseEntity
                     .badRequest()
@@ -32,8 +34,9 @@ public class UserController {
             String userId = userService.createUser(authRequest.email());
             return ResponseEntity.ok(userId);
         } catch (Exception e) {
+            log.error("failed to create user", e);
             return ResponseEntity.internalServerError()
-                    .body(e.getMessage());
+                    .body(Map.of("error_message", e.getMessage()));
         }
     }
 
@@ -49,8 +52,9 @@ public class UserController {
             String sessionId = sessionService.createOrGetSessionId(userId);
             return ResponseEntity.ok(Map.of("userId", userId, "sessionId", sessionId));
         } catch (Exception e) {
+            log.error("failed to fetch user info", e);
             return ResponseEntity.internalServerError()
-                    .build();
+                    .body(Map.of("error_message", e.getMessage()));
         }
     }
 }

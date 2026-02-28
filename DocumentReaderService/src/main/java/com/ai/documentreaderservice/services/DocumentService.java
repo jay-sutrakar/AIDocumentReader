@@ -54,7 +54,8 @@ public class DocumentService {
         }
 
         ragService.deleteDocumentEmbeddings(documentId);
-        jdbcTemplate.query(QueryUtil.DELETE_CHAT_HISTORY, (row, idx) -> idx, documentId);
-        jdbcTemplate.query(QueryUtil.DELETE_DOCUMENT_METADATA, (row, idx) -> idx, documentId);
+        UUID documentUUID = UUID.fromString(documentId);
+        jdbcTemplate.query(QueryUtil.DELETE_CHAT_HISTORY, (row, idx) -> idx, documentUUID);
+        jdbcTemplate.query(QueryUtil.DELETE_DOCUMENT_METADATA, (row, idx) -> idx, documentUUID);
     }
 }
