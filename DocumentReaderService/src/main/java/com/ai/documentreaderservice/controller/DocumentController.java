@@ -59,10 +59,11 @@ public class DocumentController {
     public ResponseEntity<?> chat(@RequestBody ChatRequest chatRequest, @RequestHeader(value = "userId") String userId) {
         long startTime = System.currentTimeMillis();
         try {
-            if (!StringUtils.hasText(chatRequest.message()) || chatRequest.documentId() == null) {
-                return ResponseEntity.badRequest().build();
+            if (!StringUtils.hasText(chatRequest.message()) || chatRequest.documentId() == null || chatRequest.sessionId() == null) {
+                log.error("missing request params, content={} | documentId={} | sessionId={}", chatRequest.message(), chatRequest.documentId(), chatRequest.sessionId());
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error_message", "missing required request params"));
             }
-
             String response = chatService.getResponse(chatRequest.message(), userId, chatRequest.sessionId());
             ChatMessage userChatMessage = ChatMessage
                     .builder()
@@ -92,6 +93,10 @@ public class DocumentController {
     @GetMapping(value = "/chat-history", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getChatHistory(@RequestParam(value = "documentId") String documentId) {
         try {
+            if (documentId == null) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error_message", "documentId is required."));
+            }
             List<ChatMessage> chatHistories = chatService.getChatHistory(documentId);
             log.info("Successfully fetched chat history");
             return ResponseEntity.ok(chatHistories);

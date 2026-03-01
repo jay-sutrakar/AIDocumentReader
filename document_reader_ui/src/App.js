@@ -14,8 +14,9 @@ function App() {
   const [showChat, setShowChat] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState({});
-  const [documentsErrorMessage, setDocumentsErrorMessage] = useState("");
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
+
   const dispatch = useDispatch();
   const { userId, sessionId } = useSelector((state) => state.auth);
 
@@ -48,9 +49,11 @@ function App() {
       const data = await response.json();
       if (response.ok) {
         dispatch(uploadDocumentsSuccess(data));
+      } else {
+        setErrorMessage("failed to fetch uploaded document !");
       }
     } catch (error) {
-      setDocumentsErrorMessage(error);
+      setErrorMessage(error);
     }
   };
   useEffect(() => {
@@ -59,13 +62,13 @@ function App() {
     const storedUserId = localStorage.getItem("userId");
     const sessionId = localStorage.getItem("sessionId");
     if (storedUserId) {
-      dispatch(login({ userId: storedUserId }));
+      dispatch(login({ userId: storedUserId, sessionId: sessionId }));
       setIsLoggedIn(true);
       fetchDocuments(storedUserId).then((r) => {
         console.log("fetched documents");
       });
     } else if (sessionId) {
-        dispatch(createSession({sessionId: sessionId}));
+      dispatch(createSession({ sessionId: sessionId }));
     }
   }, []);
 
@@ -80,7 +83,7 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem("userId");
-    localStorage.removeItem("sessionId")
+    localStorage.removeItem("sessionId");
     dispatch(logout({}));
     setShowChat(false);
     dispatch(uploadDocumentsSuccess([]));
@@ -93,11 +96,12 @@ function App() {
     console.log("Logged in:", userId);
     localStorage.setItem("userId", userId);
     localStorage.setItem("sessionId", sessionId);
-    dispatch(login({userId: userId, sessionId: sessionId}))
+    dispatch(login({ userId: userId, sessionId: sessionId }));
     fetchDocuments(userId);
   };
 
   const hasReachedFreeLimit = !isLoggedIn && documents.length >= 1;
+
   if (showAuthModal) {
     return (
       <AuthModal
@@ -117,44 +121,11 @@ function App() {
       </div>
 
       <div className="relative z-10 flex flex-col h-screen">
-        {/* TOP BAR: Title + Login */}
-        <div className="flex items-center justify-between px-6 py-4  backdrop-blur-lg">
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-              Mr. Doc Expert
-            </h1>
-            <p className="text-xs text-gray-400">
-              Upload your documents and chat with them
-            </p>
-          </div>
-          {/* User logging section */}
-          <div className="flex items-center space-x-3">
-            {isLoggedIn ? (
-              <>
-                <span className="text-sm text-emerald-300">Logged in</span>
-                <button
-                  onClick={handleLogout}
-                  className="px-3 py-1 text-sm rounded-full bg-white/10 hover:bg-white/20 border border-white/20"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={handleLogin}
-                className="px-3 py-1 text-sm rounded-full bg-emerald-500 hover:bg-emerald-600 text-black font-medium"
-              >
-                Login
-              </button>
-            )}
-          </div>
-        </div>
-
         <div className="flex flex-1">
           {/* LEFT SIDEBAR: Document List */}
-          <div className="w-60 border-r border-white/10 bg-white/3 backdrop-blur-xl">
-            <div className="p-6 border-b border-white/10">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+          <div className="w-60 border-white/10 bg-white/3 backdrop-blur-xl">
+            <div className="p-3 border-b border-white/10">
+              <h2 className="text-l font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
                 📄 Documents
               </h2>
               <p className="text-sm text-gray-400 mt-1">
@@ -175,13 +146,19 @@ function App() {
                     key={doc.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="
-                                            group bg-white/5 backdrop-blur-sm border border-white/10
-                                            hover:bg-white/10 hover:border-white/20 rounded-2xl p-4
-                                            cursor-pointer transition-all hover:shadow-xl hover:-translate-x-1
-                                        "
+                    className={`
+                        group
+                        bg-white/5 backdrop-blur-sm border border-white/10
+                        hover:bg-white/10 hover:border-white/20
+                        rounded-2xl p-4
+                        cursor-pointer transition-all hover:shadow-xl hover:-translate-x-1
+                        ${
+                        selectedDocument?.id === doc.id
+                            ? "ring-2 ring-white/40 bg-white/10 border-white/30 shadow-lg"
+                            : ""
+                        }
+                    `}
                     onClick={() => {
-                      console.log(doc);
                       setSelectedDocument(doc);
                       setShowChat(true);
                     }}
@@ -195,7 +172,9 @@ function App() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-small text-white truncate">
-                            {doc.fileName}
+                            {doc.fileName.length <= 15
+                              ? doc.fileName
+                              : doc.fileName.substring(0, 12) + "..."}
                           </p>
                           <p className="font-small text-white truncate">
                             {doc.documentId}
@@ -220,13 +199,51 @@ function App() {
 
           {/* MAIN CONTENT: Upload or Chat */}
           <div className="flex-1 flex flex-col">
+            {/* TOP BAR: Title + Login */}
+        <div className="flex items-center justify-end px-6 py-4  backdrop-blur-lg">
+          {/* User logging section */}
+          <div className="flex items-center space-x-3">
+            {isLoggedIn ? (
+              <>
+                <span className="text-sm text-emerald-300">Logged in</span>
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-1 text-sm rounded-full bg-white/10 hover:bg-white/20 border border-white/20"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleLogin}
+                className="px-3 py-1 text-sm rounded-full bg-emerald-500 hover:bg-emerald-600 text-black font-medium"
+              >
+                Login
+              </button>
+            )}
+          </div>
+        </div>
             <div className="flex-1 p-8 overflow-y-auto">
+                
               {/* Login required message for >1 doc */}
               {hasReachedFreeLimit && (
                 <div className="max-w-4xl mx-auto mb-4">
                   <div className="rounded-xl border border-amber-400/50 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
                     <p className="font-medium">
                       You have reached the free limit of 1 document.
+                    </p>
+                    <p className="text-xs mt-1">
+                      Please login to upload more documents and continue
+                      analyzing additional files.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {errorMessage != null && (
+                <div className="max-w-4xl mx-auto mb-4">
+                  <div className="rounded-xl border border-red-600/50 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                    <p className="font-medium">
+                      Something went wrong !!
                     </p>
                     <p className="text-xs mt-1">
                       Please login to upload more documents and continue
@@ -247,6 +264,7 @@ function App() {
                   >
                     <UploadView
                       documents={documents}
+                      setSelectedDocument={setSelectedDocument}
                       onChatOpen={() => setShowChat(true)}
                       isLoggedIn={isLoggedIn}
                     />

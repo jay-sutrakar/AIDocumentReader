@@ -4,9 +4,7 @@ import { ArrowLeft, Send, Bot } from "lucide-react";
 import { useSelector } from "react-redux";
 
 export default function ChatView({ selectedDocument, onBack }) {
-  const { userId, sessionId } = useSelector((state) => state.auth);
-  const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState([
+  const defaultMessage = [
     {
       id: 1,
       role: "ai",
@@ -14,7 +12,10 @@ export default function ChatView({ selectedDocument, onBack }) {
         "I've analyzed your document(s). Ask me anything about the content!",
       avatar: "🤖",
     },
-  ]);
+  ];
+  const { userId, sessionId } = useSelector((state) => state.auth);
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState(defaultMessage);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
 
@@ -46,6 +47,8 @@ export default function ChatView({ selectedDocument, onBack }) {
         }));
         if (chatHistory.length > 0) {
           setMessages(chatHistory);
+        } else {
+          setMessages(defaultMessage)
         }
       }
     } catch (error) {

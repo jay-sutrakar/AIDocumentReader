@@ -38,6 +38,8 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
       if (!response.ok) {
         throw new Error("Invalid credentials");
+      } else { 
+        setError("error occured !")
       }
 
       const data = await response.json();

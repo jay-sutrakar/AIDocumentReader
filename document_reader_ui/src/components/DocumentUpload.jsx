@@ -3,10 +3,11 @@ import { uploadDocumentsStart, uploadDocumentsSuccess, uploadDocumentsFailure } 
 import { v4 as uuidv4 } from 'uuid';
 import {useDispatch, useSelector} from "react-redux";
 import { UploadCloud, X, Loader2 } from 'lucide-react';  // npm i lucide-react
+import { header } from 'framer-motion/client';
 
 const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) => {
     const dispatch = useDispatch();
-    const {userId, isUserLoggedIn} = useSelector((state) => state.auth);
+    const {userId, sessionId, isUserLoggedIn} = useSelector((state) => state.auth);
     const documents = useSelector((state) => state.documents.items);
     const [files, setFiles] = useState([]);
     const [uploading, setUploading] = useState(false);
@@ -44,8 +45,8 @@ const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) =>
         if (e.target.files) handleFiles(e.target.files);
     };
 
-    const removeFile = (index) => {
-        setFiles(prev => prev.filter((_, i) => i !== index));
+    const removeFile = () => {
+        setFiles([]);
     };
 
     const uploadFiles = async () => {
@@ -57,6 +58,9 @@ const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) =>
         if (userId != null) {
             headers['userId'] = userId;
         }
+        if(sessionId != null) {
+            headers['sessionId'] = sessionId;
+        }
 
         try {
             const response = await fetch('http://localhost:7070/api/document/upload', {
@@ -66,8 +70,7 @@ const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) =>
             });
             if (response.ok) {
                 const data = await response.json();
-                onUpload();
-                console.log(data);
+                onUpload(data);
                 dispatch(uploadDocumentsSuccess([
                     {
                        id: data.documentId,
@@ -125,7 +128,6 @@ const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) =>
                 <input
                     ref={fileInputRef}
                     type="file"
-                    multiple
                     accept={allowedTypes.join(',')}
                     onChange={handleChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -133,11 +135,10 @@ const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) =>
             </div>
 
             {/* File List */}
-            {files.length === 1 && (
+            {files.length >= 1 && (
                 <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {files.map((file, index) => (
-                            <div key={index} className="
+                            <div key={`key-${files[0].name}`} className="
                                 group bg-white/5 backdrop-blur-sm border border-white/10
                                 rounded-2xl p-4 hover:bg-white/10 hover:border-white/20
                                 transition-all hover:shadow-xl flex items-center justify-between
@@ -145,18 +146,18 @@ const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) =>
                                 <div className="flex items-center space-x-3 truncate">
                                     <div className="w-10 h-10 bg-gradient-to-br from-gray-500/30 to-gray-600/30 rounded-xl flex items-center justify-center flex-shrink-0">
                                         <span className="text-xs font-bold text-white uppercase">
-                                            {file.name.split('.').pop()}
+                                            {files[0].name.split('.').pop()}
                                         </span>
                                     </div>
                                     <div className="truncate">
-                                        <p className="font-medium text-white truncate">{file.name}</p>
+                                        <p className="font-medium text-white truncate">{files[0].name}</p>
                                         <p className="text-sm text-gray-400">
-                                            {(file.size / 1024 / 1024).toFixed(1)} MB
+                                            {(files[0].size / 1024 / 1024).toFixed(1)} MB
                                         </p>
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => removeFile(index)}
+                                    onClick={() => removeFile()}
                                     className="
                                         p-2 hover:bg-white/20 rounded-xl transition-all
                                         hover:scale-110 opacity-70 hover:opacity-100
@@ -165,7 +166,6 @@ const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) =>
                                     <X className="w-5 h-5 text-gray-400" />
                                 </button>
                             </div>
-                        ))}
                     </div>
 
                     {/* Upload Button */}
@@ -190,7 +190,7 @@ const DocumentUpload = ({ onUpload, maxSizeMB = 5, allowedTypes = ['.pdf'] }) =>
                         ) : (
                             <>
                                 <UploadCloud className="w-5 h-5" />
-                                Upload {files.length} {files.length === 1 ? 'file' : 'files'}
+                                Upload file
                             </>
                         )}
                     </button>
